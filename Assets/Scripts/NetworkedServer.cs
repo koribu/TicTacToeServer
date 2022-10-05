@@ -8,6 +8,13 @@ using UnityEngine.UI;
 
 public class NetworkedServer : MonoBehaviour
 {
+    static public class SignifierList
+    {
+        public const int Login = 0;
+        public const int CreateAccount = 1;
+
+    }
+
     int maxConnections = 1000;
     int reliableChannelID;
     int unreliableChannelID;
@@ -51,6 +58,7 @@ public class NetworkedServer : MonoBehaviour
                 string msg = Encoding.Unicode.GetString(recBuffer, 0, dataSize);
                 ProcessRecievedMsg(msg, recConnectionID);
                 break;
+               
             case NetworkEventType.DisconnectEvent:
                 Debug.Log("Disconnection, " + recConnectionID);
                 break;
@@ -67,7 +75,91 @@ public class NetworkedServer : MonoBehaviour
 
     private void ProcessRecievedMsg(string msg, int id)
     {
+
+        Debug.Log("Go message = " + msg);
+
+        string[] msgs = msg.Split(',');
+        int signifier = int.Parse(msgs[0]);
+
+        if(signifier == SignifierList.Login)
+        {
+          /*  Debug.Log("username: " + msgs[1]);
+            Debug.Log("Password: " + msgs[2]);*/
+
+            CheckAccounts(msgs[1], msgs[2], id);
+        }
+        else if(signifier == SignifierList.CreateAccount)
+        {
+            CreateAccount(msgs[1], msgs[2],  id);
+        }
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
+    }
+    private void CreateAccount(string userName, string passWord, int id)
+    {
+        bool isAccountNameTaken = false;
+        using (StreamReader sr = new StreamReader("Accounts.txt", true))
+        {
+
+            string line;
+
+            while ((line = sr.ReadLine()) != null)
+            {
+                string[] data = line.Split(',');
+
+                if (string.Equals(data[0],userName)) //account name already taken?
+                {
+                    isAccountNameTaken = true;
+                }
+            }
+        }
+
+        if(!isAccountNameTaken)
+        {
+            StreamWriter sw = new StreamWriter("Accounts.txt", true);
+
+            sw.WriteLine(userName + "," +passWord);
+
+            SendMessageToClient("Your account Created", id);
+
+            sw.Close();
+        }
+        else
+        {
+            SendMessageToClient("Account name already taken", id);
+        }
+        
+
+    }
+    private void CheckAccounts(string userName, string passWord, int id)
+    {
+        using (StreamReader sr = new StreamReader("Accounts.txt", true))
+        {
+
+            string line;
+
+            while ((line = sr.ReadLine()) != null)
+            {
+                string[] data = line.Split(',');
+                
+                if(data[0] == userName) //found the account name
+                {
+                    if(string.Equals(data[1], passWord)) // password matchs, login now
+                    {
+                        SendMessageToClient("Login is success", id);
+                    }
+                    else // wrong password
+                    {
+                        SendMessageToClient("Wrong password", id);
+                    }
+                }
+                else
+                {
+                    SendMessageToClient("Wrong username", id);
+                }
+            }
+
+
+        }
     }
 
 }
