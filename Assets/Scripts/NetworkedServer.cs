@@ -8,10 +8,18 @@ using UnityEngine.UI;
 
 public class NetworkedServer : MonoBehaviour
 {
-    static public class SignifierList
+    static public class ClientMessageSignifierList
     {
         public const int Login = 0;
         public const int CreateAccount = 1;
+        public const int JoinRoom = 2;
+    }
+    static public class ServerFeedBackSignifierList
+    {
+        public const int LoginSuccess = 0;
+        public const int LoginFailure = 1;
+        public const int CreateAccountSuccess = 2;
+        public const int CreateAccountFailure = 3;
 
     }
 
@@ -20,6 +28,8 @@ public class NetworkedServer : MonoBehaviour
     int unreliableChannelID;
     int hostID;
     int socketPort = 5491;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -81,17 +91,22 @@ public class NetworkedServer : MonoBehaviour
         string[] msgs = msg.Split(',');
         int signifier = int.Parse(msgs[0]);
 
-        if(signifier == SignifierList.Login)
+        if(signifier == ClientMessageSignifierList.Login)
         {
           /*  Debug.Log("username: " + msgs[1]);
             Debug.Log("Password: " + msgs[2]);*/
 
             CheckAccounts(msgs[1], msgs[2], id);
         }
-        else if(signifier == SignifierList.CreateAccount)
+        else if(signifier == ClientMessageSignifierList.CreateAccount)
         {
             CreateAccount(msgs[1], msgs[2],  id);
         }
+        else if (signifier == ClientMessageSignifierList.JoinRoom)
+        {
+            JoinRoom(msgs[1], id);
+        }
+     
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
     }
     private void CreateAccount(string userName, string passWord, int id)
@@ -119,13 +134,13 @@ public class NetworkedServer : MonoBehaviour
 
             sw.WriteLine(userName + "," +passWord);
 
-            SendMessageToClient("Your account Created", id);
+            SendMessageToClient(ServerFeedBackSignifierList.CreateAccountSuccess + "," + "Your account Created", id);
 
             sw.Close();
         }
         else
         {
-            SendMessageToClient("Account name already taken", id);
+            SendMessageToClient(ServerFeedBackSignifierList.CreateAccountFailure + "," + "Account name already taken", id);
         }
         
 
@@ -145,21 +160,25 @@ public class NetworkedServer : MonoBehaviour
                 {
                     if(string.Equals(data[1], passWord)) // password matchs, login now
                     {
-                        SendMessageToClient("Login is success", id);
+                        SendMessageToClient(ServerFeedBackSignifierList.LoginSuccess + "," + "Login is success", id);
                     }
                     else // wrong password
                     {
-                        SendMessageToClient("Wrong password", id);
+                        SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong password", id);
                     }
                 }
                 else
                 {
-                    SendMessageToClient("Wrong username", id);
+                    SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong username", id);
                 }
             }
 
 
         }
     }
-
+    
+    private void JoinRoom(string roomName, int id)
+    {
+      
+    }
 }
