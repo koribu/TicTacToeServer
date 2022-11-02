@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.IO;
 using UnityEngine.UI;
+using System.Numerics;
+using System.Linq;
 
 public class NetworkedServer : MonoBehaviour
 {
@@ -20,15 +22,22 @@ public class NetworkedServer : MonoBehaviour
         public const int LoginFailure = 1;
         public const int CreateAccountSuccess = 2;
         public const int CreateAccountFailure = 3;
-
+        public const int JoinRoomAsPlayer1 = 4;
+        public const int JoinRoomAsPlayer2 = 5;
     }
+
+   
 
     int maxConnections = 1000;
     int reliableChannelID;
     int unreliableChannelID;
     int hostID;
     int socketPort = 5491;
+    public List<TicTacToeGame> gameRooms;
 
+    [SerializeField]
+    Dictionary<string,string> accountList = new Dictionary<string, string>();
+    Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>();
 
 
     // Start is called before the first frame update
@@ -40,6 +49,8 @@ public class NetworkedServer : MonoBehaviour
         unreliableChannelID = config.AddChannel(QosType.Unreliable);
         HostTopology topology = new HostTopology(config, maxConnections);
         hostID = NetworkTransport.AddHost(topology, socketPort, null);
+
+        LoadAccountList();
 
     }
 
@@ -109,9 +120,8 @@ public class NetworkedServer : MonoBehaviour
      
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
     }
-    private void CreateAccount(string userName, string passWord, int id)
+    private void LoadAccountList()
     {
-        bool isAccountNameTaken = false;
         using (StreamReader sr = new StreamReader("Accounts.txt", true))
         {
 
@@ -119,16 +129,18 @@ public class NetworkedServer : MonoBehaviour
 
             while ((line = sr.ReadLine()) != null)
             {
-                string[] data = line.Split(',');
+                string[] temp = line.Split(',');
+                accountList.Add(temp[0], temp[1]);
+                
 
-                if (string.Equals(data[0],userName)) //account name already taken?
-                {
-                    isAccountNameTaken = true;
-                }
             }
-        }
+        } 
+    }
 
-        if(!isAccountNameTaken)
+    private void CreateAccount(string userName, string passWord, int id)
+    {
+       
+        if (!accountList.ContainsKey(userName))
         {
             StreamWriter sw = new StreamWriter("Accounts.txt", true);
 
@@ -137,6 +149,8 @@ public class NetworkedServer : MonoBehaviour
             SendMessageToClient(ServerFeedBackSignifierList.CreateAccountSuccess + "," + "Your account Created", id);
 
             sw.Close();
+
+            accountList.Add(userName, passWord);
         }
         else
         {
@@ -147,38 +161,59 @@ public class NetworkedServer : MonoBehaviour
     }
     private void CheckAccounts(string userName, string passWord, int id)
     {
-        using (StreamReader sr = new StreamReader("Accounts.txt", true))
-        {
-
-            string line;
-
-            while ((line = sr.ReadLine()) != null)
-            {
-                string[] data = line.Split(',');
+        
                 
-                if(data[0] == userName) //found the account name
-                {
-                    if(string.Equals(data[1], passWord)) // password matchs, login now
-                    {
-                        SendMessageToClient(ServerFeedBackSignifierList.LoginSuccess + "," + "Login is success", id);
-                    }
-                    else // wrong password
-                    {
-                        SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong password", id);
-                    }
-                }
-                else
-                {
-                    SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong username", id);
-                }
+        if(accountList.ContainsKey(userName))//found the account name
+        {
+            if (accountList[userName] == passWord) // password matchs, login now
+            {
+                SendMessageToClient(ServerFeedBackSignifierList.LoginSuccess + "," + "Login is success", id);
+                onlinePlayerList.Add(id, userName);
+                return;
             }
-
-
+            else // wrong password
+            {
+                SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong password", id);
+                return;
+            }
+    
+           SendMessageToClient(ServerFeedBackSignifierList.LoginFailure + "," + "Wrong username", id);
         }
     }
     
     private void JoinRoom(string roomName, int id)
     {
-      
+
+        foreach (TicTacToeGame room in gameRooms)
+        {
+            
+            if (room.RoomName == roomName) // it is already created
+            {
+
+                room.Gamer2 = id;
+                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[room.Gamer2].ToString() + "," + onlinePlayerList[room.Gamer1] + "," + roomName, room.Gamer2);
+                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[room.Gamer1] + "," + onlinePlayerList[room.Gamer2] +  "," + roomName, room.Gamer1);
+                return;
+            }
+        }
+
+        TicTacToeGame newRoom = new TicTacToeGame();
+        newRoom.RoomName = roomName;
+        newRoom.Gamer1 = id; 
+        gameRooms.Add(newRoom);
+
+        SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer1 + "," + onlinePlayerList[id].ToString() + "," + roomName, id);
+        
+    }
+
+    
+    private void LeaveRoom()
+    {
+
+    }
+
+    private void OnApplicationQuit()
+    {
+        
     }
 }
