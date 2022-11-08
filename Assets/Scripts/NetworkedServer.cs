@@ -14,7 +14,7 @@ public class NetworkedServer : MonoBehaviour
     {
         public const int Login = 0;
         public const int CreateAccount = 1;
-        public const int JoinRoom = 2;
+        public const int GameUpdate = 2;
     }
     static public class ServerFeedBackSignifierList
     {
@@ -24,6 +24,7 @@ public class NetworkedServer : MonoBehaviour
         public const int CreateAccountFailure = 3;
         public const int JoinRoomAsPlayer1 = 4;
         public const int JoinRoomAsPlayer2 = 5;
+        public const int GameUpdate = 6;
     }
 
    
@@ -38,6 +39,7 @@ public class NetworkedServer : MonoBehaviour
     [SerializeField]
     Dictionary<string,string> accountList = new Dictionary<string, string>();
     Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>();
+    Dictionary<int, int> gameRoomIDs = new Dictionary<int, int>();
 
 
     // Start is called before the first frame update
@@ -113,11 +115,15 @@ public class NetworkedServer : MonoBehaviour
         {
             CreateAccount(msgs[1], msgs[2],  id);
         }
-        else if (signifier == ClientMessageSignifierList.JoinRoom)
+        else if (signifier == ClientMessageSignifierList.GameUpdate)
         {
             JoinRoom(msgs[1], id);
         }
-     
+        else if (signifier == ClientMessageSignifierList.GameUpdate)
+        {
+            UpdatePlayers(msgs, id);
+        }
+
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
     }
     private void LoadAccountList()
@@ -184,15 +190,16 @@ public class NetworkedServer : MonoBehaviour
     private void JoinRoom(string roomName, int id)
     {
 
-        foreach (TicTacToeGame room in gameRooms)
+        for (int i = 0; i <gameRooms.Count; i++)
         {
             
-            if (room.RoomName == roomName) // it is already created
+            if (gameRooms[i].RoomName == roomName) // it is already created
             {
 
-                room.Gamer2 = id;
-                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[room.Gamer2].ToString() + "," + onlinePlayerList[room.Gamer1] + "," + roomName, room.Gamer2);
-                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[room.Gamer1] + "," + onlinePlayerList[room.Gamer2] +  "," + roomName, room.Gamer1);
+                gameRooms[i].Gamer2 = id;
+                gameRoomIDs.Add(id, i);
+                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[gameRooms[i].Gamer2].ToString() + "," + onlinePlayerList[gameRooms[i].Gamer1] + "," + roomName, gameRooms[i].Gamer2);
+                SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer2 + "," + onlinePlayerList[gameRooms[i].Gamer1] + "," + onlinePlayerList[gameRooms[i].Gamer2] +  "," + roomName, gameRooms[i].Gamer1);
                 return;
             }
         }
@@ -201,9 +208,28 @@ public class NetworkedServer : MonoBehaviour
         newRoom.RoomName = roomName;
         newRoom.Gamer1 = id; 
         gameRooms.Add(newRoom);
+        gameRoomIDs.Add(id, gameRooms.Count-1);
 
         SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer1 + "," + onlinePlayerList[id].ToString() + "," + roomName, id);
         
+    }
+
+    void UpdatePlayers(string[] msgs, int id)
+    {
+        TicTacToeGame game = gameRooms[gameRoomIDs[id]];
+        int[] gameStatus = game.Play(int.Parse(msgs[1]),id);
+
+        string messages = game.IsGameEnded().ToString();
+        foreach(int i in gameStatus)
+        {
+            messages += "," + i;
+        }
+
+        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + !game.Turn + messages,game.Gamer1);
+        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + game.Turn + messages, game.Gamer2);
+
+
+
     }
 
     
