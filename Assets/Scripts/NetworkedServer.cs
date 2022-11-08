@@ -14,7 +14,8 @@ public class NetworkedServer : MonoBehaviour
     {
         public const int Login = 0;
         public const int CreateAccount = 1;
-        public const int GameUpdate = 2;
+        public const int JoinRoom = 2;
+        public const int GameUpdate = 3;
     }
     static public class ServerFeedBackSignifierList
     {
@@ -115,7 +116,7 @@ public class NetworkedServer : MonoBehaviour
         {
             CreateAccount(msgs[1], msgs[2],  id);
         }
-        else if (signifier == ClientMessageSignifierList.GameUpdate)
+        else if (signifier == ClientMessageSignifierList.JoinRoom)
         {
             JoinRoom(msgs[1], id);
         }
@@ -208,14 +209,15 @@ public class NetworkedServer : MonoBehaviour
         newRoom.RoomName = roomName;
         newRoom.Gamer1 = id; 
         gameRooms.Add(newRoom);
-        gameRoomIDs.Add(id, gameRooms.Count-1);
+        gameRoomIDs.Add(id, gameRooms.Count - 1);
 
-        SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer1 + "," + onlinePlayerList[id].ToString() + "," + roomName, id);
+        SendMessageToClient(ServerFeedBackSignifierList.JoinRoomAsPlayer1 + "," + onlinePlayerList[id] + "," + roomName, id);
         
     }
 
     void UpdatePlayers(string[] msgs, int id)
     {
+        Debug.Log("Game Updating...");
         TicTacToeGame game = gameRooms[gameRoomIDs[id]];
         int[] gameStatus = game.Play(int.Parse(msgs[1]),id);
 
@@ -225,8 +227,9 @@ public class NetworkedServer : MonoBehaviour
             messages += "," + i;
         }
 
-        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + !game.Turn + messages,game.Gamer1);
-        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + game.Turn + messages, game.Gamer2);
+        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + game.Turn + "," + messages,game.Gamer1);//messages has= signifier + turn of player + isGameEnded + Game status array
+
+        SendMessageToClient(ServerFeedBackSignifierList.GameUpdate + "," + (1-game.Turn) + "," + messages, game.Gamer2);
 
 
 
