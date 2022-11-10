@@ -6,8 +6,8 @@ public class TicTacToeGame : MonoBehaviour
 {
     string roomName;
    
-    int gamer1, gamer2;
-    int[] gameSpots = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    int gamer1 = 0, gamer2 = 0;
+    int[] gameSpots = { 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     int turn = 1; // 1 for gamer1, 0 for gamer2
 
@@ -35,7 +35,26 @@ public class TicTacToeGame : MonoBehaviour
         return gameSpots;
     }
 
+    public void LeavingPlayer(int playerID)
+    {
+        if(gamer1== playerID)
+        {
+            gamer1 = 0;
+        }
+        else if (gamer2 == playerID)
+        {
+            gamer2 = 0;
+        }
+    }
 
+    public bool IsRoomEmpty()
+    {
+        if(gamer1 == 0 && gamer2 == 0)
+        {
+            return true;
+        }
+        return false;
+    }
     public int IsGameEnded() //0 for game not ended, 1 for game ended
     {
         if ((gameSpots[0] != 0 && gameSpots[0] == gameSpots[1] && gameSpots[1] == gameSpots[2]) ||

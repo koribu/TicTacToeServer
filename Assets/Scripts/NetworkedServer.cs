@@ -16,6 +16,7 @@ public class NetworkedServer : MonoBehaviour
         public const int CreateAccount = 1;
         public const int JoinRoom = 2;
         public const int GameUpdate = 3;
+        public const int LeaveRoom = 4;
     }
     static public class ServerFeedBackSignifierList
     {
@@ -38,9 +39,9 @@ public class NetworkedServer : MonoBehaviour
     public List<TicTacToeGame> gameRooms;
 
     [SerializeField]
-    Dictionary<string,string> accountList = new Dictionary<string, string>();
-    Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>();
-    Dictionary<int, int> gameRoomIDs = new Dictionary<int, int>();
+    Dictionary<string,string> accountList = new Dictionary<string, string>(); // account lists that load at the very beginning
+    Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>(); //Onlice accounts with names
+    Dictionary<int, int> gameRoomIDs = new Dictionary<int, int>(); // dictionary that hold which account in which gameRoom
 
 
     // Start is called before the first frame update
@@ -123,6 +124,10 @@ public class NetworkedServer : MonoBehaviour
         else if (signifier == ClientMessageSignifierList.GameUpdate)
         {
             UpdatePlayers(msgs, id);
+        }
+        else if (signifier == ClientMessageSignifierList.LeaveRoom)
+        {
+            LeaveRoom(id);
         }
 
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
@@ -236,13 +241,23 @@ public class NetworkedServer : MonoBehaviour
     }
 
     
-    private void LeaveRoom()
+    private void LeaveRoom(int id)
     {
+        int roomNum = gameRoomIDs[id];
+        gameRoomIDs.Remove(id);
+       
+        gameRooms[roomNum].LeavingPlayer(id);
 
+        if (gameRooms[roomNum].IsRoomEmpty())
+        {
+            
+            gameRooms.RemoveAt(roomNum);
+        }
     }
 
     private void OnApplicationQuit()
     {
         
+
     }
 }
