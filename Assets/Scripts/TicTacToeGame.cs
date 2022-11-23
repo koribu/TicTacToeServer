@@ -4,6 +4,27 @@ using UnityEngine;
 
 public class TicTacToeGame : MonoBehaviour
 {
+    static public class GamersTurnSignifier
+    {
+        public const int Gamer2sTurn = 0;
+        public const int Gamer1sTurn = 1;
+       
+    }
+
+    static public class IsSpotEmptySignifier
+    {
+        public const int SpotIsEmpty = 0;
+        public const int SpotIsTaken = 1;
+
+    }
+
+    static public class TicTacToeMoveSignifier
+    {
+        public const int EmptySpot = 0;
+        public const int X = 1;
+        public const int O = 2;
+    }
+
     string roomName;
    
     int gamer1 = 0, gamer2 = 0;
@@ -20,16 +41,16 @@ public class TicTacToeGame : MonoBehaviour
 
     public int[] Play(int spot, int gamer)
     {
-        if(turn == 1) // gamer1's turn to player
+        if(turn == GamersTurnSignifier.Gamer1sTurn) // gamer1's turn to player
         {
-            gameSpots[spot] = 1;
-            turn = 0;
+            gameSpots[spot] = TicTacToeMoveSignifier.X;
+            turn = GamersTurnSignifier.Gamer2sTurn;
         }
             
-        else if(turn == 0)// gamer2's turn to player
+        else if(turn == GamersTurnSignifier.Gamer2sTurn)// gamer2's turn to player
         {
-            gameSpots[spot] = 2;
-            turn = 1;
+            gameSpots[spot] = TicTacToeMoveSignifier.O;
+            turn = GamersTurnSignifier.Gamer1sTurn;
         }
             
         return gameSpots;
@@ -39,17 +60,17 @@ public class TicTacToeGame : MonoBehaviour
     {
         if(gamer1== playerID)
         {
-            gamer1 = 0;
+            gamer1 = IsSpotEmptySignifier.SpotIsEmpty;
         }
         else if (gamer2 == playerID)
         {
-            gamer2 = 0;
+            gamer2 = IsSpotEmptySignifier.SpotIsEmpty;
         }
     }
 
     public bool IsRoomEmpty()
     {
-        if(gamer1 == 0 && gamer2 == 0)
+        if(gamer1 == IsSpotEmptySignifier.SpotIsEmpty && gamer2 == IsSpotEmptySignifier.SpotIsEmpty)
         {
             return true;
         }
