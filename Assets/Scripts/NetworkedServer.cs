@@ -24,6 +24,7 @@ public class NetworkedServer : MonoBehaviour
         if (NetworkedServerProcessing.GetNetworkedServer() == null)
         {
             NetworkedServerProcessing.SetNetworkedServer(this);
+           
 
             NetworkTransport.Init();
             ConnectionConfig config = new ConnectionConfig();
@@ -31,6 +32,9 @@ public class NetworkedServer : MonoBehaviour
             unreliableChannelID = config.AddChannel(QosType.Unreliable);
             HostTopology topology = new HostTopology(config, maxConnections);
             hostID = NetworkTransport.AddHost(topology, socketPort, null);
+
+
+            NetworkedServerProcessing.LoadAccountList();
         }
         else
         {
@@ -78,6 +82,8 @@ public class NetworkedServer : MonoBehaviour
         byte error = 0;
         byte[] buffer = Encoding.Unicode.GetBytes(msg);
         NetworkTransport.Send(hostID, id, reliableChannelID, buffer, msg.Length * sizeof(char), out error);
+
+        Debug.Log(msg);
     }
 
    

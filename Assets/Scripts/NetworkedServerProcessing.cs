@@ -1,8 +1,9 @@
+using NUnit.Framework.Constraints;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using static NetworkedServer;
+
 
 static public class NetworkedServerProcessing
 {
@@ -25,13 +26,14 @@ static public class NetworkedServerProcessing
         public const int GameUpdate = 6;
     }
 
-    static public List<TicTacToeGame> gameRooms;
+    static public List<TicTacToeGame> gameRooms = new List<TicTacToeGame>();
 
     [SerializeField]
     static Dictionary<string, string> accountList = new Dictionary<string, string>(); // account lists that load at the very beginning
     static Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>(); //Onlice accounts with names
     static Dictionary<int, int> gameRoomIDs = new Dictionary<int, int>(); // dictionary that hold which account in which gameRoom
 
+    
 
 
     #region Setup
@@ -86,6 +88,7 @@ static public class NetworkedServerProcessing
     static public void SendMessageToClient(string msg, int clientConnectionID)
     {
         networkedServer.SendMessageToClient(msg, clientConnectionID);
+        Debug.Log("Sending message to client= " + msg);
     }
 
     static public void LoadAccountList()
@@ -130,7 +133,7 @@ static public class NetworkedServerProcessing
     static private void CheckAccounts(string userName, string passWord, int id)
     {
 
-
+        Debug.Log("Login message to client= " + userName);
         if (accountList.ContainsKey(userName))//found the account name
         {
             if (accountList[userName] == passWord) // password matchs, login now
