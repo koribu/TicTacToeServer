@@ -21,14 +21,22 @@ public class NetworkedServer : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        NetworkTransport.Init();
-        ConnectionConfig config = new ConnectionConfig();
-        reliableChannelID = config.AddChannel(QosType.Reliable);
-        unreliableChannelID = config.AddChannel(QosType.Unreliable);
-        HostTopology topology = new HostTopology(config, maxConnections);
-        hostID = NetworkTransport.AddHost(topology, socketPort, null);
+        if (NetworkedServerProcessing.GetNetworkedServer() == null)
+        {
+            NetworkedServerProcessing.SetNetworkedServer(this);
 
-        NetworkedServerProcessing.LoadAccountList();
+            NetworkTransport.Init();
+            ConnectionConfig config = new ConnectionConfig();
+            reliableChannelID = config.AddChannel(QosType.Reliable);
+            unreliableChannelID = config.AddChannel(QosType.Unreliable);
+            HostTopology topology = new HostTopology(config, maxConnections);
+            hostID = NetworkTransport.AddHost(topology, socketPort, null);
+        }
+        else
+        {
+            Debug.Log("Singleton-ish architecture violation detected, investigate where NetworkedServer.cs Start() is being called.  Are you creating a second instance of the NetworkedServer game object or has the NetworkedServer.cs been attached to more than one game object?");
+            Destroy(this.gameObject);
+        }
 
     }
 

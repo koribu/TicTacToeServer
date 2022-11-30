@@ -32,7 +32,21 @@ static public class NetworkedServerProcessing
     static Dictionary<int, string> onlinePlayerList = new Dictionary<int, string>(); //Onlice accounts with names
     static Dictionary<int, int> gameRoomIDs = new Dictionary<int, int>(); // dictionary that hold which account in which gameRoom
 
+
+
+    #region Setup
     static NetworkedServer networkedServer;
+
+    static public void SetNetworkedServer(NetworkedServer NetworkedServer)
+    {
+        networkedServer = NetworkedServer;
+    }
+    static public NetworkedServer GetNetworkedServer()
+    {
+        return networkedServer;
+    }
+
+    #endregion
 
     static public void ProcessRecievedMsg(string msg, int id)
     {
@@ -71,7 +85,7 @@ static public class NetworkedServerProcessing
 
     static public void SendMessageToClient(string msg, int clientConnectionID)
     {
-        SendMessageToClient(msg, clientConnectionID);
+        networkedServer.SendMessageToClient(msg, clientConnectionID);
     }
 
     static public void LoadAccountList()
@@ -100,7 +114,7 @@ static public class NetworkedServerProcessing
 
             sw.WriteLine(userName + "," + passWord);
 
-            networkedServer.SendMessageToClient(ServerFeedBackSignifierList.CreateAccountSuccess + "," + "Your account Created", id);
+            SendMessageToClient(ServerFeedBackSignifierList.CreateAccountSuccess + "," + "Your account Created", id);
 
             sw.Close();
 
